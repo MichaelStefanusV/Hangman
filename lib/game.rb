@@ -1,16 +1,15 @@
 #lib/game.rb
 
-require_relative 'player'
+require 'json'
 
 class Game
   
-  def initialize(player)
-    @player = player
-    @word = pick_random()
-    @win = false
-    @wrong = []
-    @answered = []
-    @guess = 10
+  def initialize(input = {})
+    @word = input.fetch(:word, pick_random())
+    @win = input.fetch(:win, false)
+    @wrong = input.fetch(:wrong, [])
+    @answered = input.fetch(:answered, [])
+    @guess = input.fetch(:guess, 10)
   end
 
   def play
@@ -20,9 +19,10 @@ class Game
       puts "Please enter an alphabet. Answered so far : #{display_answered_word}"
       alp = gets.chomp
       check_answer(alp)
+      break if alp.downcase == "save"
       if iswin?()
-        "You've won!!"
-        @word = pick_random()
+        puts "You've won!!"
+        @word = pick_random().chomp
         @win = false
         @wrong = []
         @answered = []
@@ -31,32 +31,72 @@ class Game
       end
       @guess = @guess - 1
     end
-    "You lose!!"
-    @word = pick_random()
-    @win = false
-    @wrong = []
-    @answered = []
-    @guess = 10
+    if @guess == 0
+      puts "You lose!!"
+      puts "The word is #{@word}"
+      @word = pick_random()
+      @win = false
+      @wrong = []
+      @answered = []
+      @guess = 10
+    end
+    puts "Thank you for playing!!"
+  end
+
+  def save(filename)
+    save_path = File.expand_path('../save', File.dirname(__FILE__))
+    fname = File.join(save_path, "#{filename}.json")
+    dump = to_json
+    file = File.open(fname, "w") do |f|
+      f.write(dump)
+    end
   end
 
   private
 
   def check_answer(word)
-
-    if is_valid?(word)
-
-      if @answered.include?(word) 
-        "You have entered that word!"
-      elsif @word.split("").include?(word)
-        @answered << word.downcase
-      else
-        @wrong << word.upcase
-      end
-
+    if word.downcase == "save"
+      puts "Enter a name for your save file"
+      name = gets.chomp
+      save(name)
+      puts "File saved"
     else
-      "Invalid answer!"
+      if is_valid?(word)
+
+        if @answered.include?(word) 
+          puts "You have entered that word!"
+          @guess += 1
+        elsif @word.split("").include?(word)
+          @answered << word.downcase
+        else
+          @wrong << word.upcase
+        end
+      else
+        puts "Invalid answer!"
+        @guess += 1
+      end
     end
-  
+  end
+
+  def to_json
+    JSON.dump({
+      :word => @word,
+      :win => @win,
+      :wrong => @wrong,
+      :answered => @answered,
+      :guess => @guess
+    })
+  end
+
+  def self.from_json(string)
+    data = JSON.load string
+    self.new( 
+      word:data['word'], 
+      win:data['win'],
+      wrong:data['wrong'],
+      answered:data['answered'],
+      guess:data['guess']
+    )
   end
 
   def is_valid?(word)
@@ -117,7 +157,3 @@ class Game
   end
 
 end
-
-player = Player.new(name:"raka")
-game = Game.new(player)
-game.play
