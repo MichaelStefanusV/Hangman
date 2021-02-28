@@ -4,12 +4,12 @@ require 'json'
 
 class Game
   
-  def initialize(input = {})
-    @word = input.fetch(:word, pick_random())
-    @win = input.fetch(:win, false)
-    @wrong = input.fetch(:wrong, [])
-    @answered = input.fetch(:answered, [])
-    @guess = input.fetch(:guess, 10)
+  def initialize(word = pick_random(), win = false, wrong = [], answered = [], guess = 10)
+    @word = word
+    @win = win
+    @wrong = wrong
+    @answered = answered
+    @guess = guess
   end
 
   def play
@@ -62,7 +62,6 @@ class Game
       puts "File saved"
     else
       if is_valid?(word)
-
         if @answered.include?(word) 
           puts "You have entered that word!"
           @guess += 1
@@ -91,11 +90,11 @@ class Game
   def self.from_json(string)
     data = JSON.load string
     self.new( 
-      word:data['word'], 
-      win:data['win'],
-      wrong:data['wrong'],
-      answered:data['answered'],
-      guess:data['guess']
+      data['word'], 
+      data['win'],
+      data['wrong'],
+      data['answered'],
+      data['guess']
     )
   end
 
@@ -133,7 +132,7 @@ class Game
 
   def pick_random
     
-    file = File.open("../testList.txt", "r")
+    file = File.open("testList.txt", "r")
     arr = Array.new
     
     while !file.eof?
@@ -144,6 +143,8 @@ class Game
     file.close
     
     chosen = arr.sample
+    len = chosen.length
+    chosen = chosen[0..(len-2)]
     chosen
   end
 

@@ -7,16 +7,21 @@ puts "Would you like to play a new game or load?"
 puts "Enter 1 to play"
 puts "Enter anything else to load"
 
-chose = gets.chomp
+chosen = gets.chomp
 
-if chose == "1"
+if chosen == "1"
   game = Game.new
   game.play
 else
-  load_path = File.expand_path('../save', File.dirname(__FILE__))
-  puts Dir.entries(load_path)
+  load_list_path = File.expand_path("../save", File.dirname(__FILE__))
+  puts Dir.entries(load_list_path)
+  puts "Enter the save file name that you want to load."
   filename = gets.chomp
-  fname = File.join(load_path, filename)
-  game = Game.from_json(fname)
-  game.play
+  file_path = File.expand_path("../save/#{filename}", File.dirname(__FILE__))
+  File.open(file_path, 'r') do |file|
+    if File.basename(file.path) == filename
+      game = Game.from_json(file)
+      game.play
+    end
+  end
 end
